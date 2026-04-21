@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Factoriza y Conquista</title>
+<style>
+  :root{
+    --bg1:#1e1b4b; --bg2:#312e81; --card:#ffffff; --text:#1f2937; --muted:#6b7280;
+    --ok:#16a34a; --bad:#dc2626; --accent:#f59e0b; --accent2:#06b6d4; --enemy:#7c3aed;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:Arial, Helvetica, sans-serif; color:#fff;
+    background:linear-gradient(135deg,var(--bg1),var(--bg2)); min-height:100vh;
+  }
+  .wrap{max-width:1100px; margin:0 auto; padding:20px}
+  .screen{display:none}
+  .screen.active{display:block}
+  .hero{
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); border-radius:22px;
+    padding:24px; box-shadow:0 10px 30px rgba(0,0,0,.25)
+  }
+  h1,h2,h3{margin:0 0 12px}
+  p{line-height:1.5}
+  .btn{
+    background:linear-gradient(135deg,var(--accent),#fb7185); color:#111827; border:none;
+    padding:12px 18px; border-radius:14px; cursor:pointer; font-weight:700; margin:6px 6px 0 0;
+  }
+  .btn.secondary{background:linear-gradient(135deg,#e5e7eb,#cbd5e1)}
+  .btn.info{background:linear-gradient(135deg,var(--accent2),#67e8f9)}
+  .btn:disabled{opacity:.45; cursor:not-allowed}
+  .grid{display:grid; grid-template-columns:1.1fr .9fr; gap:18px; margin-top:18px}
+  .panel{
+    background:var(--card); color:var(--text); border-radius:20px; padding:20px; box-shadow:0 10px 24px rgba(0,0,0,.25)
+  }
+  .stats{display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin-bottom:14px}
+  .stat{background:#eef2ff; padding:12px; border-radius:14px; text-align:center}
+  .stat small{display:block; color:var(--muted)}
+  .question{font-size:1.4rem; font-weight:700; margin:10px 0 14px}
+  .answers{display:grid; gap:10px}
+  .answer{
+    border:2px solid #dbeafe; background:#f8fafc; border-radius:14px; padding:14px; cursor:pointer; font-size:1rem; text-align:left;
+  }
+  .answer:hover{border-color:#93c5fd}
+  .answer.correct{background:#dcfce7; border-color:#22c55e}
+  .answer.wrong{background:#fee2e2; border-color:#ef4444}
+  .bar{height:16px; background:#e5e7eb; border-radius:999px; overflow:hidden; margin:8px 0}
+  .fill{height:100%; width:0; background:linear-gradient(90deg,#22c55e,#84cc16)}
+  .enemyWrap{background:#ede9fe; border-radius:18px; padding:18px}
+  .enemy{
+    height:170px; border-radius:18px; background:radial-gradient(circle at 50% 30%, #a78bfa, var(--enemy));
+    display:flex; align-items:center; justify-content:center; font-size:70px; margin-bottom:10px;
+  }
+  .hint,.log,.mini{background:#f8fafc; border-left:5px solid #38bdf8; padding:12px; border-radius:12px; color:#0f172a}
+  .log{border-left-color:#f59e0b; max-height:140px; overflow:auto; margin-top:12px}
+  .mini{border-left-color:#8b5cf6; margin-top:10px}
+  .pill{display:inline-block; background:#e0f2fe; color:#075985; padding:6px 10px; border-radius:999px; font-size:.9rem; margin-right:6px}
+  .footer{margin-top:18px; color:#d1d5db; font-size:.9rem}
+
+.enemy.shake{animation:shake .35s}
+.enemy.hit{animation:pulse .35s}
+@keyframes shake{
+  0%{transform:translateX(0)} 25%{transform:translateX(-8px)} 50%{transform:translateX(8px)} 75%{transform:translateX(-6px)} 100%{transform:translateX(0)}
+}
+@keyframes pulse{
+  0%{transform:scale(1)} 50%{transform:scale(1.07)} 100%{transform:scale(1)}
+}
+.center{text-align:center}
+  @media (max-width: 860px){
+    .grid{grid-template-columns:1fr}
+    .stats{grid-template-columns:repeat(2,1fr)}
+  }
+</style>
+</head>
+<body>
+<audio id="bgMusic" loop>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9dba1c.mp3?filename=fantasy-game-background-loop-110624.mp3" type="audio/mpeg">
+</audio>
+
+<div class="wrap">
+  <div id="startScreen" class="screen active">
+    <div class="hero">
+      <h1>⚔️ Factoriza y Conquista</h1>
+      <p><strong>Historia:</strong> En el Reino Algebraico, el villano <strong>Error Matemático</strong> desordenó las expresiones del reino. Tú eres el <strong>Guardián del Álgebra</strong> y debes restaurar el equilibrio resolviendo productos notables y casos de factorización.</p>
+      <p>Este prototipo incluye <strong>4 niveles</strong>, batallas matemáticas, puntos, tiempo, pista, eliminación de opción incorrecta y barra de progreso, tal como plantea tu proyecto fileciteturn3file0.</p>
+      <div>
+        <span class="pill">Nivel 1: Productos notables</span>
+        <span class="pill">Nivel 2: Factorización básica</span>
+        <span class="pill">Nivel 3: Factorización avanzada</span>
+        <span class="pill">Jefe final</span>
+      </div>
+      <button class="btn" onclick="startGame()">Comenzar aventura</button>
+      <button class="btn secondary" onclick="toggleMusic()">🔊 Música</button>
+      <button class="btn info" onclick="showRules()">📜 Reglas</button>
+    </div>
+    <div id="rulesBox" class="panel" style="display:none; margin-top:16px">
+        <h3>Reglas del desafío</h3>
+        <p>Dispones de <strong>15 segundos</strong> por pregunta. Si respondes rápido haces más daño al enemigo y ganas más puntos. Si fallas o se acaba el tiempo, perderás vidas y puntaje.</p>
+        <p>Las pistas y ayudas tienen costo. En el nivel final, Error Matemático tiene más energía y preguntas mixtas.</p>
+      </div>
+    <div class="footer">Archivo listo para abrir en navegador. Puedes publicarlo en Google usando GitHub Pages o Netlify.</div>
+  </div>
+
+  <div id="gameScreen" class="screen">
+    <div class="stats">
+      <div class="stat"><small>Nivel</small><strong id="levelName">1</strong></div>
+      <div class="stat"><small>Puntaje</small><strong id="score">0</strong></div>
+      <div class="stat"><small>Tiempo</small><strong id="timer">15</strong>s</div>
+      <div class="stat"><small>Progreso</small><strong id="progressText">0/0</strong></div>
+      <div class="stat"><small>Racha</small><strong id="combo">0</strong></div>
+      <div class="stat"><small>Vidas</small><strong id="lives">3</strong></div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2 id="questionTitle">Desafío algebraico</h2>
+        <div class="question" id="questionText"></div>
+        <div class="answers" id="answers"></div>
+        <div style="margin-top:14px">
+          <button id="hintBtn" class="btn info" onclick="useHint()">Usar pista</button>
+          <button id="removeBtn" class="btn secondary" onclick="removeWrongOption()">Eliminar opción incorrecta</button>
+          <button id="nextBtn" class="btn" onclick="nextQuestion()" style="display:none">Siguiente</button>
+        </div>
+        <div id="hintBox" class="hint" style="display:none; margin-top:12px"></div>
+        <div class="log" id="logBox"></div>
+      </div>
+
+      <div class="panel">
+        <div class="enemyWrap">
+          <h3 id="enemyName">Enemigo del nivel</h3>
+          <div class="enemy" id="enemyIcon">👾</div>
+          <div><strong>Energía del enemigo</strong></div>
+          <div class="bar"><div class="fill" id="enemyHp"></div></div>
+          <div id="enemyHpText">100%</div>
+        </div>
+        <div class="mini">
+          <strong>Mecánicas del juego</strong>
+          <p style="margin:.5rem 0 0">Cada respuesta correcta hace daño al enemigo. Responder rápido da puntos extra. Si fallas, pierdes puntos y el enemigo resiste.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="endScreen" class="screen">
+    <div class="hero center">
+      <h1>🏆 ¡Reino restaurado!</h1>
+      <p>Has derrotado a <strong>Error Matemático</strong> y devuelto el equilibrio al Reino Algebraico.</p>
+      <h2>Puntaje final: <span id="finalScore">0</span></h2>
+      <p id="finalMsg"></p>
+      <button class="btn" onclick="restartGame()">Jugar de nuevo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const levels = [
+  {
+    name:"Nivel 1: Productos notables",
+    enemy:"Duende Binomial",
+    icon:"🧌",
+    questions:[
+      {q:"¿Cuál es el desarrollo de (a+b)²?", options:["a² + 2ab + b²","a² - 2ab + b²","a² + b²","a² - b²"], correct:0, hint:"Recuerda: cuadrado del primero + doble producto + cuadrado del segundo."},
+      {q:"¿Cuál es el desarrollo de (a-b)²?", options:["a² + 2ab + b²","a² - 2ab + b²","a² - b²","a² + b²"], correct:1, hint:"Cambia el signo del término del medio: cuadrado del primero - doble producto + cuadrado del segundo."},
+      {q:"¿Cuál es el resultado de (a+b)(a-b)?", options:["a² - b²","a² + 2ab + b²","a² - 2ab + b²","ab - b²"], correct:0, hint:"Es una suma por diferencia: se cancela el término cruzado."},
+      {q:"¿Cuál corresponde a (x+5)²?", options:["x² + 10x + 25","x² - 10x + 25","x² + 25","x² - 25"], correct:0, hint:"Aplica (a+b)² con a=x y b=5."}
+    ]
+  },
+  {
+    name:"Nivel 2: Factorización básica",
+    enemy:"Orco del Factor",
+    icon:"👹",
+    questions:[
+      {q:"Factoriza: 3x + 6", options:["3(x+2)","6(x+3)","3(x+6)","x(3+6)"], correct:0, hint:"Saca el factor común mayor: 3."},
+      {q:"Factoriza: x² - 9", options:["(x+3)(x-3)","(x+9)(x-1)","(x-3)²","x(x-9)"], correct:0, hint:"Es una diferencia de cuadrados: a² - b² = (a+b)(a-b)."},
+      {q:"Factoriza: 5y² + 10y", options:["5y(y+2)","10y(y+5)","5(y²+2)","y(5y+10y)"], correct:0, hint:"El factor común es 5y."},
+      {q:"Factoriza: 16m² - 25", options:["(4m+5)(4m-5)","(16m+25)(16m-25)","(4m-5)²","m(16m-25)"], correct:0, hint:"16m²=(4m)² y 25=5²."}
+    ]
+  },
+  {
+    name:"Nivel 3: Factorización avanzada",
+    enemy:"Hechicero Trinomial",
+    icon:"🧙",
+    questions:[
+      {q:"Factoriza: x² + 6x + 9", options:["(x+3)²","(x-3)²","(x+9)(x+1)","x(x+6)+9"], correct:0, hint:"Es un trinomio cuadrado perfecto: a² + 2ab + b²."},
+      {q:"Factoriza: x² + 5x + 6", options:["(x+2)(x+3)","(x+1)(x+6)","(x-2)(x-3)","(x+5)(x+1)"], correct:0, hint:"Busca dos números que sumen 5 y multipliquen 6."},
+      {q:"Factoriza: x² - 8x + 16", options:["(x-4)²","(x+4)²","(x-2)(x-8)","x(x-8)+16"], correct:0, hint:"Es cuadrado perfecto: a² - 2ab + b²."},
+      {q:"Factoriza: x² + 7x + 12", options:["(x+3)(x+4)","(x+6)(x+2)","(x-3)(x-4)","(x+12)(x+1)"], correct:0, hint:"Busca dos números que sumen 7 y multipliquen 12."}
+    ]
+  },
+  {
+    name:"Nivel Final: Error Matemático",
+    enemy:"Error Matemático",
+    icon:"👑",
+    questions:[
+      {q:"Selecciona la opción correcta para: (x+2)²", options:["x² + 4x + 4","x² - 4x + 4","x² + 2x + 4","x² - 4"], correct:0, hint:"Cuadrado del primero, doble producto, cuadrado del segundo."},
+      {q:"Factoriza: x² - 16", options:["(x+4)(x-4)","(x-8)(x+2)","(x-4)²","x(x-16)"], correct:0, hint:"Diferencia de cuadrados."},
+      {q:"Factoriza: x² + 9x + 20", options:["(x+4)(x+5)","(x+10)(x+2)","(x-4)(x-5)","(x+20)(x+1)"], correct:0, hint:"Dos números que sumen 9 y multipliquen 20."},
+      {q:"Factoriza: 2x² + 4x", options:["2x(x+2)","2(x²+2x)","x(2x+4x)","4x(x+1)"], correct:0, hint:"Saca factor común 2x."},
+      {q:"¿Cuál es el desarrollo de (m+n)(m-n)?", options:["m² - n²","m² + 2mn + n²","m² - 2mn + n²","mn - n²"], correct:0, hint:"Suma por diferencia."},
+      {q:"Factoriza: x² - 10x + 25", options:["(x-5)²","(x+5)²","(x-25)(x+1)","x(x-10)+25"], correct:0, hint:"Es un trinomio cuadrado perfecto."},
+      {q:"Factoriza: x² + 11x + 24", options:["(x+3)(x+8)","(x+4)(x+6)","(x+12)(x+2)","(x-3)(x-8)"], correct:0, hint:"Busca dos números que sumen 11 y multipliquen 24."}
+    ]
+  }
+];
+
+let currentLevel = 0;
+let currentQuestion = 0;
+let score = 0;
+let enemyMaxHp = 100;
+let enemyHp = 100;
+let timer = 15;
+let timerId = null;
+let answered = false;
+let hintUsed = false;
+let removeUsed = false;
+let combo = 0;
+let lives = 3;
+let musicOn = false;
+
+function startGame(){
+  currentLevel = 0; currentQuestion = 0; score = 0; combo = 0; lives = 3;
+  updateExtras();
+  startMusic();
+  showScreen('gameScreen');
+  loadLevel();
+}
+function restartGame(){
+  stopMusic();
+  showScreen('startScreen');
+}
+function showRules(){
+  const box = document.getElementById('rulesBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+function toggleMusic(){
+  const music = document.getElementById('bgMusic');
+  if(music.paused){ music.play(); musicOn = true; }
+  else { music.pause(); musicOn = false; }
+}
+function startMusic(){
+  const music = document.getElementById('bgMusic');
+  music.volume = 0.35;
+  music.play().then(()=>{ musicOn = true; }).catch(()=>{ musicOn = false; });
+}
+function stopMusic(){
+  const music = document.getElementById('bgMusic');
+  music.pause();
+  music.currentTime = 0;
+  musicOn = false;
+}
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function loadLevel(){
+  currentQuestion = 0;
+  enemyMaxHp = levels[currentLevel].questions.length * (currentLevel === levels.length-1 ? 40 : 30);
+  enemyHp = enemyMaxHp;
+  document.getElementById('levelName').textContent = levels[currentLevel].name;
+  document.getElementById('enemyName').textContent = levels[currentLevel].enemy;
+  document.getElementById('enemyIcon').textContent = levels[currentLevel].icon;
+  document.getElementById('logBox').innerHTML = `<strong>Bitácora:</strong> Has entrado a ${levels[currentLevel].name}. Prepárate para un desafío más difícil.`;
+  updateScore(); updateEnemy(); loadQuestion();
+}
+function loadQuestion(){
+  clearInterval(timerId); timer = currentLevel === levels.length-1 ? 12 : 15; answered = false; hintUsed = false; removeUsed = false;
+  document.getElementById('hintBox').style.display = 'none';
+  document.getElementById('hintBtn').disabled = false;
+  document.getElementById('removeBtn').disabled = false;
+  document.getElementById('nextBtn').style.display = 'none';
+  const q = levels[currentLevel].questions[currentQuestion];
+  document.getElementById('questionTitle').textContent = `Pregunta ${currentQuestion+1}`;
+  document.getElementById('questionText').textContent = q.q;
+  document.getElementById('progressText').textContent = `${currentQuestion+1}/${levels[currentLevel].questions.length}`;
+  const answers = document.getElementById('answers'); answers.innerHTML = '';
+  q.options.forEach((opt, i)=>{
+    const b = document.createElement('button');
+    b.className = 'answer'; b.textContent = opt;
+    b.onclick = ()=>answerQuestion(i,b);
+    answers.appendChild(b);
+  });
+  document.getElementById('timer').textContent = timer;
+  updateExtras();
+  timerId = setInterval(()=>{
+    timer--; document.getElementById('timer').textContent = timer;
+  updateExtras();
+    if(timer<=0){ clearInterval(timerId); if(!answered){ timeOut(); } }
+  },1000);
+}
+function answerQuestion(index, btn){
+  if(answered) return; answered = true; clearInterval(timerId);
+  const q = levels[currentLevel].questions[currentQuestion];
+  const buttons = [...document.querySelectorAll('.answer')];
+  buttons[q.correct].classList.add('correct');
+  let speedBonus = timer >= 10 ? 10 : timer >= 6 ? 5 : 0;
+  if(index === q.correct){
+    btn.classList.add('correct');
+    combo += 1;
+    let comboBonus = combo >= 3 ? 5 : 0;
+    let points = 10 + speedBonus + comboBonus - (hintUsed ? 2 : 0);
+    score += Math.max(points, 5);
+    let damage = (currentLevel === levels.length-1 ? 35 : 30) + (timer >= 10 ? 10 : 0);
+    enemyHp = Math.max(0, enemyHp - damage);
+    addLog(`✅ Correcto. Ganaste ${Math.max(points,5)} puntos y causaste ${damage} de daño.`);
+    hitEffect(true);
+  } else {
+    btn.classList.add('wrong');
+    combo = 0;
+    score = Math.max(0, score - 10);
+    lives -= 1;
+    addLog(`❌ Incorrecto. Pierdes 10 puntos y 1 vida.`);
+    hitEffect(false);
+  }
+  buttons.forEach(b=>b.disabled=true);
+  updateScore(); updateEnemy(); updateExtras();
+  if(lives <= 0){ endGame(false); return; }
+  document.getElementById('nextBtn').style.display = 'inline-block';
+}
+function timeOut(){
+  answered = true;
+  const q = levels[currentLevel].questions[currentQuestion];
+  const buttons = [...document.querySelectorAll('.answer')];
+  buttons[q.correct].classList.add('correct');
+  buttons.forEach(b=>b.disabled=true);
+  combo = 0;
+  score = Math.max(0, score - 10);
+  lives -= 1;
+  updateScore(); updateExtras();
+  addLog('⏰ Se acabó el tiempo. Pierdes 10 puntos y 1 vida.');
+  hitEffect(false);
+  if(lives <= 0){ endGame(false); return; }
+  document.getElementById('nextBtn').style.display = 'inline-block';
+}
+function nextQuestion(){
+  currentQuestion++;
+  if(currentQuestion < levels[currentLevel].questions.length){
+    loadQuestion();
+  } else if(currentLevel < levels.length-1){
+    currentLevel++;
+    loadLevel();
+  } else {
+    endGame(true);
+  }
+}
+function useHint(){
+  if(hintUsed || answered) return;
+  const q = levels[currentLevel].questions[currentQuestion];
+  const box = document.getElementById('hintBox');
+  box.style.display='block'; box.textContent = 'Pista: ' + q.hint;
+  hintUsed = true; document.getElementById('hintBtn').disabled = true;
+  addLog('💡 Usaste una pista. Tu puntaje potencial baja un poco.');
+}
+function removeWrongOption(){
+  if(removeUsed || answered) return;
+  const q = levels[currentLevel].questions[currentQuestion];
+  const buttons = [...document.querySelectorAll('.answer')];
+  const wrongs = buttons.map((b,i)=>i).filter(i=>i!==q.correct && !buttons[i].disabled);
+  const removeIndex = wrongs[Math.floor(Math.random()*wrongs.length)];
+  buttons[removeIndex].disabled = true;
+  buttons[removeIndex].style.opacity = .35;
+  removeUsed = true; document.getElementById('removeBtn').disabled = true;
+  score = Math.max(0, score - 2); updateScore(); addLog('🪄 Se eliminó una opción incorrecta. Pierdes 2 puntos por usar ayuda.');
+}
+function updateExtras(){
+  document.getElementById('combo').textContent = combo;
+  document.getElementById('lives').textContent = lives > 0 ? '❤️'.repeat(lives) : '0';
+}
+function hitEffect(success){
+  const enemy = document.getElementById('enemyIcon');
+  enemy.classList.remove('shake','hit');
+  void enemy.offsetWidth;
+  enemy.classList.add(success ? 'hit' : 'shake');
+  document.body.style.background = success
+    ? 'linear-gradient(135deg,#14532d,#166534)'
+    : 'linear-gradient(135deg,#4c0519,#7f1d1d)';
+  setTimeout(()=>{
+    document.body.style.background = 'linear-gradient(135deg,#1e1b4b,#312e81)';
+    enemy.classList.remove('shake','hit');
+  }, 320);
+}
+function updateScore(){ document.getElementById('score').textContent = score; }
+function updateEnemy(){
+  const pct = Math.round((enemyHp/enemyMaxHp)*100);
+  document.getElementById('enemyHp').style.width = pct + '%';
+  document.getElementById('enemyHpText').textContent = pct + '%';
+}
+function addLog(text){
+  const box = document.getElementById('logBox');
+  box.innerHTML += `<div style="margin-top:6px">${text}</div>`;
+  box.scrollTop = box.scrollHeight;
+}
+function endGame(victory=true){
+  clearInterval(timerId);
+  document.getElementById('finalScore').textContent = score;
+  if(!victory){
+    document.getElementById('finalMsg').textContent = 'Te quedaste sin vidas. Vuelve a intentarlo para vencer a Error Matemático.';
+  } else {
+    document.getElementById('finalMsg').textContent = score >= 240 ? '¡Legendario! Dominas productos notables y factorización con gran precisión.' : score >= 170 ? 'Excelente trabajo. Has superado un reto matemático exigente.' : 'Buen esfuerzo. Has restaurado el reino, pero aún puedes mejorar tu puntaje.';
+  }
+  showScreen('endScreen');
+}
+</script>
+</body>
+</html>
